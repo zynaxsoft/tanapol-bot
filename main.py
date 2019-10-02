@@ -5,6 +5,7 @@ import yaml
 import tanapol
 from tanapol.argparse import args
 from tanapol import backlog
+from tanapol import github
 
 
 if args.secrets_file is None:
@@ -17,3 +18,8 @@ with open(secrets_path, 'r') as secrets_file:
 
 backlog_api_key = secrets['backlog']['api_key']
 backlog_client = backlog.BacklogClient(backlog_api_key)
+# print(backlog_client.check_auth())
+
+
+github_token = secrets['github']['token']
+github_client = github.GithubClient(github_token)

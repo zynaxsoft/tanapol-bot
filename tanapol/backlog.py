@@ -7,8 +7,9 @@ API_V2 = f'{BASE_URL}/api/v2'
 
 class BacklogResponse:
 
-    def __init__(self, json_dict):
-        self.content = json_dict
+    def __init__(self, response):
+        self.response = response
+        self.content = response.json()
 
     def __repr__(self):
         return str(self.content)
@@ -26,7 +27,7 @@ class BacklogClient:
         request_method = requests.get
         if post:
             request_method = requests.post
-        url = f'{API_V2}/{entry}'
+        url = f'{API_V2}{entry}'
         request_params = dict(apiKey=self.secret,
                               **kwargs,
                               )
@@ -34,9 +35,9 @@ class BacklogClient:
         return BacklogResponse(response)
 
     def check_auth(self):
-        return self._request('users/myself')
+        return self._request('/users/myself')
 
     def comment(self, issue, content):
-        return self._request(f'issues/{issue}/comments',
+        return self._request(f'/issues/{issue}/comments',
                              post=True,
                              content=content)
