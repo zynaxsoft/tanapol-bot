@@ -2,6 +2,8 @@ import json
 
 import requests
 
+from flask import make_response
+
 from tanapol.log import logger
 
 
@@ -98,3 +100,20 @@ class SlackClient:
         data = self.peek_channel(channel_id=channel_id, count=1)
         message = data.content['messages'][0]
         self._react_message(reaction, channel_id, message['ts'])
+
+
+class SlackEventServer:
+
+    def __init__(self):
+        pass
+
+    def serve(self, request):
+        response = make_response()
+        response.status = '200'
+        response.headers['Content-Type'] = 'application/json'
+        response.data = json.dumps(
+            {
+                'key': 'value',
+                }
+            )
+        return response
