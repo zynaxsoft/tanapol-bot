@@ -18,7 +18,7 @@ else:
     secrets_path = args.secrets_file
 
 with open(secrets_path, 'r') as secrets_file:
-    secrets = yaml.load(secrets_file)
+    secrets = yaml.safe_load(secrets_file)
 
 backlog_api_key = secrets['backlog']['api_key']
 backlog_client = backlog.BacklogClient(backlog_api_key)
