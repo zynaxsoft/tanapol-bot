@@ -14,8 +14,6 @@ verbosity = min(2, args.v)
 stream_handler.setLevel(logging.WARNING - logging.DEBUG * verbosity)
 logger.addHandler(stream_handler)
 
-logger.debug('test')
-
 
 def handle_exception(exc_type, exc_value, exc_traceback, **kwargs):
     logger.error("Uncaught exception",
