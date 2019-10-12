@@ -3,6 +3,7 @@ import json
 
 from flask import make_response
 
+from tanapol.argparse import args
 from tanapol.log import logger
 from tanapol.clients import (github_client,
                              slack_client,
@@ -10,24 +11,41 @@ from tanapol.clients import (github_client,
                              )
 
 
+def post_message_event(func):
+    def wrapper(self, event):
+        if 'text' not in event or 'subtype' in event:
+            return False
+        return func(self, event)
+    return wrapper
+
+
 class EventHandler(abc.ABC):
 
     @abc.abstractmethod
-    def can_handle(self, data):
+    def can_handle(self, event):
         pass
 
     @abc.abstractmethod
-    def handle(self, data):
+    def handle(self, event):
         pass
 
 
 class UserMentionEventHandler(EventHandler):
 
-    def can_handle(self, data):
-        pass
+    mention_text = f'<@{args.user_id}>'
 
-    def handle(self, data):
-        pass
+    @post_message_event
+    def can_handle(self, event):
+        text = event['text']
+        if self.mention_text in text:
+            return True
+        return False
+
+    def handle(self, event):
+        slack_client.post_message(message='hai',
+                                  channel_id=event['channel'],
+                                  thread_ts=event['ts'],
+                                  )
 
 
 EVENT_HANDLERS = [
@@ -50,7 +68,10 @@ class SlackEventServer:
         if 'challenge' in data:
             return self._response_challenge(data['challenge'])
         else:
-            self._handle_event(data)
+            try:
+                self._handle_event(data)
+            except Exception as error:
+                logger.error(error)
             return self._response_code(200)
         return self._response_code(404)
 
@@ -72,3 +93,11 @@ class SlackEventServer:
 
     def _handle_event(self, data):
         logger.debug(f'Event info: {json.dumps(data, indent=2)}')
+        for handler in EVENT_HANDLERS:
+            event = data['event']
+            if handler.can_handle(event):
+                logger.debug(f'{type(self).__name__} is handling the event.')
+                handler.handle(event)
+            else:
+                logger.debug(f'{type(handler).__name__} could not handle'
+                             f' the event.')

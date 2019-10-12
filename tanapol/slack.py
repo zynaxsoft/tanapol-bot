@@ -13,6 +13,17 @@ class SlackResponse:
     def __init__(self, response):
         self.response = response
         self.content = response.json()
+        self._log_error()
+
+    def _log_error(self):
+        try:
+            if self.content['error'] == 'already_reacted':
+                logger.warning(f'Message with timestamp'
+                               f' is already reacted.')
+            else:
+                logger.error(self)
+        except KeyError:
+            pass
 
     def __repr__(self):
         return json.dumps(self.content,
@@ -79,22 +90,22 @@ class SlackClient:
                          )
 
     def _react_message(self, reaction, channel_id, timestamp):
-        response = self._post('/reactions.add',
-                              name=reaction,
-                              timestamp=timestamp,
-                              channel=channel_id,
-                              )
-        try:
-            if response.content['error'] == 'already_reacted':
-                logger.warning(f'Message with timestamp {timestamp}'
-                               f' is already reacted.')
-            else:
-                logger.error(response)
-        except KeyError:
-            pass
+        self._post('/reactions.add',
+                    name=reaction,
+                    timestamp=timestamp,
+                    channel=channel_id,
+                    )
 
     def react_latest_message(self, reaction, channel):
         channel_id = self.get_channel_id(channel)
         data = self.peek_channel(channel_id=channel_id, count=1)
         message = data.content['messages'][0]
         self._react_message(reaction, channel_id, message['ts'])
+
+    def post_message(self, message, channel_id, thread_ts=None):
+        self._post('/chat.postMessage',
+                   channel=channel_id,
+                   text=message,
+                   thread_ts=thread_ts,
+                   icon_emoji=':+1:',
+                   )
