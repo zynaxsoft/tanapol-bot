@@ -25,7 +25,17 @@ def in_subscribed_channel(func):
     def wrapper(self, event):
         if 'subscribed_channels' not in db:
             return False
-        if event['channel'] not in db['subscribed_channels']:
+        try:
+            if 'item' in event:
+                channel = event['item']['channel']
+            else:
+                channel = event['channel']
+        except KeyError:
+            logger.error('this event does not contain channel information'
+                         ' or it does not relate to channel'
+                         )
+            return False
+        if channel not in db['subscribed_channels']:
             return False
         return func(self, event)
     return wrapper
