@@ -7,6 +7,7 @@ from flask import make_response
 from tanapol.argparse import args, db
 from tanapol.log import logger
 from tanapol.slackcommand import invoker
+from tanapol.slackresponder import message_responder
 from tanapol.clients import (github_client,
                              slack_client,
                              backlog_client,
@@ -41,6 +42,11 @@ def in_subscribed_channel(func):
     return wrapper
 
 
+def reply(message, event):
+    thread_ts = event.get('thread_ts', event['ts'])
+    slack_client.post_message(message, event['channel'], thread_ts=event['ts'])
+
+
 class EventHandler(abc.ABC):
 
     @abc.abstractmethod
@@ -68,10 +74,7 @@ class SubscribeEventHandler(EventHandler):
         logger.info(f'executing command {self.command}')
         resp_message = invoker.execute_command(self.command, event)
         logger.info(f'Replying with message {resp_message}')
-        slack_client.post_message(message=resp_message,
-                                  channel_id=event['channel'],
-                                  thread_ts=event['ts'],
-                                  )
+        reply(resp_message, event)
 
 class UserMentionEventHandler(EventHandler):
 
@@ -80,8 +83,7 @@ class UserMentionEventHandler(EventHandler):
     @in_subscribed_channel
     @post_message_event
     def can_handle(self, event):
-        text = event['text']
-        if self.mention_text in text:
+        if self.mention_text in event['text']:
             return True
         return False
 
@@ -92,11 +94,10 @@ class UserMentionEventHandler(EventHandler):
             logger.info(f'executing command {command}')
             resp_message = invoker.execute_command(command, event)
             logger.info(f'Replying with message {resp_message}')
-            slack_client.post_message(message=resp_message,
-                                      channel_id=event['channel'],
-                                      thread_ts=event['ts'],
-                                      )
-        thread_ts = event.get('thread_ts', event['ts'])
+            reply(resp_message, event)
+        _, _, message = event['text'].partition(f'{self.mention_text}')
+        reply_message = message_responder.get_response(message)
+        reply(reply_message, event)
 
 
 EVENT_HANDLERS = [
