@@ -43,6 +43,8 @@ def in_subscribed_channel(func):
 
 
 def reply(message, event):
+    if not message:
+        return
     thread_ts = event.get('thread_ts', event['ts'])
     slack_client.post_message(message, event['channel'], thread_ts=event['ts'])
 
