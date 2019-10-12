@@ -35,7 +35,7 @@ slack_event_server = slack.SlackEventServer()
 # slack_client.react_latest_message('thumbsup', 'tanapon-to-asobu')
 
 
-@app.route("/slack")
+@app.route("/slack", methods=['POST'])
 def slack_https():
     return slack_event_server.serve(request)
 
