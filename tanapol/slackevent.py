@@ -22,6 +22,14 @@ def post_message_event(func):
     return wrapper
 
 
+def reaction_event(func):
+    def wrapper(self, event):
+        if 'reaction' not in event:
+            return False
+        return func(self, event)
+    return wrapper
+
+
 def in_subscribed_channel(func):
     def wrapper(self, event):
         if 'subscribed_channels' not in db:
@@ -69,14 +77,16 @@ class SubscribeEventHandler(EventHandler):
         text = event['text']
         _, is_command, self.command = event['text'] \
             .partition(f'{self.mention_text} ~')
-        if 'subscribe' in self.command:
-            return True
+        if 'subscribe' not in self.command:
+            return False
+        return True
 
     def handle(self, event):
         logger.info(f'executing command {self.command}')
         resp_message = invoker.execute_command(self.command, event)
         logger.info(f'Replying with message {resp_message}')
         reply(resp_message, event)
+
 
 class UserMentionEventHandler(EventHandler):
 
@@ -85,9 +95,9 @@ class UserMentionEventHandler(EventHandler):
     @in_subscribed_channel
     @post_message_event
     def can_handle(self, event):
-        if self.mention_text in event['text']:
-            return True
-        return False
+        if self.mention_text not in event['text']:
+            return False
+        return True
 
     def handle(self, event):
         _, is_command, command = event['text'] \
@@ -102,9 +112,53 @@ class UserMentionEventHandler(EventHandler):
         reply(reply_message, event)
 
 
+class OtherUserAddedReactionEventHandler(EventHandler):
+
+    @in_subscribed_channel
+    @reaction_event
+    def can_handle(self, event):
+        if event['type'] != 'reaction_added':
+            return False
+        if event['user'] == args.user_id:
+            return False
+        return True
+
+    def handle(self, event):
+        channel = event['item']['channel']
+        if db['subscribed_channels'][channel]['repeat_reaction']:
+            logger.info('adding reaction')
+            slack_client.react_message(event['reaction'],
+                                       event['item']['channel'],
+                                       event['item']['ts'],
+                                       )
+
+
+class OtherUserRemovedReactionEventHandler(EventHandler):
+
+    @in_subscribed_channel
+    @reaction_event
+    def can_handle(self, event):
+        if event['type'] != 'reaction_removed':
+            return False
+        if event['user'] == args.user_id:
+            return False
+        return True
+
+    def handle(self, event):
+        channel = event['item']['channel']
+        if db['subscribed_channels'][channel]['repeat_reaction']:
+            logger.info('removing reaction')
+            slack_client.remove_react(event['reaction'],
+                                      event['item']['channel'],
+                                      event['item']['ts'],
+                                      )
+
+
 EVENT_HANDLERS = [
     SubscribeEventHandler(),
     UserMentionEventHandler(),
+    OtherUserAddedReactionEventHandler(),
+    OtherUserRemovedReactionEventHandler(),
     ]
 
 

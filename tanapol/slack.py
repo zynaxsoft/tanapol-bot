@@ -8,6 +8,12 @@ from tanapol.log import logger
 API_URL = 'https://slack.com/api'
 
 
+WARNING_MESSAGE = {
+    'already_reacted': 'The message is already reacted.',
+    'no_reaction': 'There is no reaction to be removed.',
+    }
+
+
 class SlackResponse:
 
     def __init__(self, response):
@@ -19,10 +25,11 @@ class SlackResponse:
 
     def _log_error(self):
         try:
-            if self.content['error'] == 'already_reacted':
-                logger.warning(f'Message with timestamp'
-                               f' is already reacted.')
-            else:
+            if 'error' not in self.content:
+                return
+            try:
+                logger.warning(WARNING_MESSAGE[self.content['error']])
+            except KeyError:
                 logger.error(self)
         except KeyError:
             pass
@@ -44,7 +51,7 @@ class SlackClient:
 
     def __init__(self, secret):
         self.post_auth_headers = {
-            'Content-type': 'application/json',
+            'Content-type': 'application/json; charset=utf-8',
             'Authorization': f'Bearer {secret}',
             }
         self.get_auth_headers = {
@@ -91,8 +98,15 @@ class SlackClient:
                          count=count,
                          )
 
-    def _react_message(self, reaction, channel_id, timestamp):
+    def react_message(self, reaction, channel_id, timestamp):
         self._post('/reactions.add',
+                    name=reaction,
+                    timestamp=timestamp,
+                    channel=channel_id,
+                    )
+
+    def remove_react(self, reaction, channel_id, timestamp):
+        self._post('/reactions.remove',
                     name=reaction,
                     timestamp=timestamp,
                     channel=channel_id,
@@ -102,7 +116,7 @@ class SlackClient:
         channel_id = self.get_channel_id(channel)
         data = self.peek_channel(channel_id=channel_id, count=1)
         message = data.content['messages'][0]
-        self._react_message(reaction, channel_id, message['ts'])
+        self.react_message(reaction, channel_id, message['ts'])
 
     def post_message(self, message, channel_id, thread_ts=None):
         self._post('/chat.postMessage',

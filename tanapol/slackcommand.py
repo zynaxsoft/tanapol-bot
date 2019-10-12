@@ -22,11 +22,15 @@ class Command(abc.ABC):
 class SubscribeChannelCommand(Command):
 
     def execute(self):
+        subscribe_channel_data = {
+            self.event['channel']: {
+                'repeat_reaction': self.cargs.repeat_reaction,
+                }
+            }
         if 'subscribed_channels' not in db:
-            db['subscribed_channels'] = [self.event['channel']]
+            db['subscribed_channels'] = subscribe_channel_data
         else:
-            if self.event['channel'] not in db['subscribed_channels']:
-                db['subscribed_channels'].append(self.event['channel'])
+            db['subscribed_channels'].update(subscribe_channel_data)
         with open(tanapol.DB_PATH, 'w') as db_file:
             json.dump(db, db_file, indent=4, ensure_ascii=False)
         logger.info(f'Subscribed to channel_id {db["subscribed_channels"]}')
@@ -45,6 +49,7 @@ def get_argparser():
     subparsers = parser.add_subparsers(dest='command')
 
     subscribe = subparsers.add_parser('subscribe')
+    subscribe.add_argument('--repeat-reaction', '-r', action='store_true')
     subscribe.set_defaults(command_cls=SubscribeChannelCommand)
 
     return parser
