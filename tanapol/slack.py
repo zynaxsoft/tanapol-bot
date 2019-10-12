@@ -13,6 +13,8 @@ class SlackResponse:
     def __init__(self, response):
         self.response = response
         self.content = response.json()
+        response_show = json.dumps(self.content, indent=2, ensure_ascii=False)
+        logger.debug(f'response {response_show}')
         self._log_error()
 
     def _log_error(self):
@@ -107,5 +109,6 @@ class SlackClient:
                    channel=channel_id,
                    text=message,
                    thread_ts=thread_ts,
-                   icon_emoji=':+1:',
+                   # icon_emoji=':+1:',
+                   as_user=True,
                    )

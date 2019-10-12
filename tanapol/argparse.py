@@ -1,3 +1,4 @@
+import json
 import os
 
 import yaml
@@ -25,3 +26,8 @@ else:
 
 with open(secrets_path, 'r') as secrets_file:
     secrets = yaml.safe_load(secrets_file)
+
+db = {}
+if os.path.isfile(tanapol.DB_PATH):
+    with open(tanapol.DB_PATH, 'r') as db_file:
+        db = json.load(db_file)

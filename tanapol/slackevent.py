@@ -1,10 +1,12 @@
 import abc
 import json
+import traceback
 
 from flask import make_response
 
-from tanapol.argparse import args
+from tanapol.argparse import args, db
 from tanapol.log import logger
+from tanapol.slackcommand import invoker
 from tanapol.clients import (github_client,
                              slack_client,
                              backlog_client,
@@ -14,6 +16,16 @@ from tanapol.clients import (github_client,
 def post_message_event(func):
     def wrapper(self, event):
         if 'text' not in event or 'subtype' in event:
+            return False
+        return func(self, event)
+    return wrapper
+
+
+def in_subscribed_channel(func):
+    def wrapper(self, event):
+        if 'subscribed_channels' not in db:
+            return False
+        if event['channel'] not in db['subscribed_channels']:
             return False
         return func(self, event)
     return wrapper
@@ -30,10 +42,32 @@ class EventHandler(abc.ABC):
         pass
 
 
+class SubscribeEventHandler(EventHandler):
+
+    mention_text = f'<@{args.user_id}>'
+
+    @post_message_event
+    def can_handle(self, event):
+        text = event['text']
+        _, is_command, self.command = event['text'] \
+            .partition(f'{self.mention_text} ~')
+        if 'subscribe' in self.command:
+            return True
+
+    def handle(self, event):
+        logger.info(f'executing command {self.command}')
+        resp_message = invoker.execute_command(self.command, event)
+        logger.info(f'Replying with message {resp_message}')
+        slack_client.post_message(message=resp_message,
+                                  channel_id=event['channel'],
+                                  thread_ts=event['ts'],
+                                  )
+
 class UserMentionEventHandler(EventHandler):
 
     mention_text = f'<@{args.user_id}>'
 
+    @in_subscribed_channel
     @post_message_event
     def can_handle(self, event):
         text = event['text']
@@ -42,13 +76,21 @@ class UserMentionEventHandler(EventHandler):
         return False
 
     def handle(self, event):
-        slack_client.post_message(message='hai',
-                                  channel_id=event['channel'],
-                                  thread_ts=event['ts'],
-                                  )
+        _, is_command, command = event['text'] \
+            .partition(f'{self.mention_text} ~')
+        if is_command:
+            logger.info(f'executing command {command}')
+            resp_message = invoker.execute_command(command, event)
+            logger.info(f'Replying with message {resp_message}')
+            slack_client.post_message(message=resp_message,
+                                      channel_id=event['channel'],
+                                      thread_ts=event['ts'],
+                                      )
+        thread_ts = event.get('thread_ts', event['ts'])
 
 
 EVENT_HANDLERS = [
+    SubscribeEventHandler(),
     UserMentionEventHandler(),
     ]
 
@@ -71,7 +113,7 @@ class SlackEventServer:
             try:
                 self._handle_event(data)
             except Exception as error:
-                logger.error(error)
+                logger.error(traceback.format_exc())
             return self._response_code(200)
         return self._response_code(404)
 
@@ -92,12 +134,13 @@ class SlackEventServer:
         return response
 
     def _handle_event(self, data):
-        logger.debug(f'Event info: {json.dumps(data, indent=2)}')
+        data_show = json.dumps(data, indent=2, ensure_ascii=False)
+        logger.debug(f'Event info: {data_show}')
         for handler in EVENT_HANDLERS:
             event = data['event']
             if handler.can_handle(event):
                 logger.debug(f'{type(self).__name__} is handling the event.')
-                handler.handle(event)
+                return handler.handle(event)
             else:
                 logger.debug(f'{type(handler).__name__} could not handle'
                              f' the event.')
