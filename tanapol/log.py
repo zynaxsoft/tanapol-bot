@@ -10,7 +10,8 @@ logger.setLevel(logging.DEBUG)
 
 stream_handler = logging.StreamHandler(stream=sys.stdout)
 stream_handler.setFormatter(log_format)
-verbosity = min(2, args.v)
+# verbosity = min(2, args.v)
+verbosity = 2
 stream_handler.setLevel(logging.WARNING - logging.DEBUG * verbosity)
 logger.addHandler(stream_handler)
 

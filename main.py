@@ -16,10 +16,16 @@ slack_event_server = SlackEventServer()
 def slack_https():
     return slack_event_server.serve(request)
 
+
 cert_path = secrets['https']['cert_path']
 key_path= secrets['https']['key_path']
 app.config['SERVER_NAME'] = 'oerba.tanapol.dev'
-app.run(ssl_context=(cert_path, key_path),
-        host='0.0.0.0',
-        port=443,
-        )
+
+
+if __name__ == '__main__':
+    from tanapol.log import logger
+    logger.info('yes')
+    app.run(ssl_context=(cert_path, key_path),
+            host='0.0.0.0',
+            port=443,
+            )
