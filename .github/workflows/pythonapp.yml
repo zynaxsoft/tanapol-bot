@@ -21,6 +21,8 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
+    - env:
+      GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
     - uses: actions/checkout@v1
     - uses: actions/setup-node@v1
       with:
