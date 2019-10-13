@@ -4,9 +4,7 @@ on: [push]
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v1
     - name: Set up Python 3.7
@@ -15,12 +13,10 @@ jobs:
         python-version: 3.7
     - name: Install dependencies
       run: |
-        test.sh
-    
-        
+        ./test.sh
   release:
+    needs: build
     runs-on: ubuntu-latest
-    
     steps:
     - uses: actions/checkout@v1
     - uses: actions/setup-node@v1
@@ -28,4 +24,4 @@ jobs:
         node-version: '8.x'
     - name: release
       run: |
-       npx semantic-release
+        npx semantic-release
