@@ -175,7 +175,7 @@ class SlackEventServer:
         else:
             try:
                 self._handle_event(data)
-            except Exception as error:
+            except Exception:
                 logger.error(traceback.format_exc())
             return self._response_code(200)
         return self._response_code(404)
