@@ -1,9 +1,6 @@
-import os
-
 from flask import Flask, request
 
-import tanapol
-from tanapol.argparse import args, secrets
+from tanapol.argparse import secrets
 from tanapol.slackevent import SlackEventServer
 
 app = Flask(__name__)
@@ -18,7 +15,7 @@ def slack_https():
 
 
 cert_path = secrets['https']['cert_path']
-key_path= secrets['https']['key_path']
+key_path = secrets['https']['key_path']
 app.config['SERVER_NAME'] = 'oerba.tanapol.dev'
 
 

@@ -1,4 +1,4 @@
-from tanapol.argparse import args, secrets
+from tanapol.argparse import secrets
 from tanapol import backlog
 from tanapol import github
 from tanapol import slack

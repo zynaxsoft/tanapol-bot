@@ -8,10 +8,7 @@ from tanapol.argparse import args, db
 from tanapol.log import logger
 from tanapol.slackcommand import invoker
 from tanapol.slackresponder import message_responder
-from tanapol.clients import (github_client,
-                             slack_client,
-                             backlog_client,
-                             )
+from tanapol.clients import slack_client
 
 
 def post_message_event(func):
@@ -54,7 +51,7 @@ def reply(message, event):
     if not message:
         return
     thread_ts = event.get('thread_ts', event['ts'])
-    slack_client.post_message(message, event['channel'], thread_ts=event['ts'])
+    slack_client.post_message(message, event['channel'], thread_ts=thread_ts)
 
 
 class EventHandler(abc.ABC):
@@ -74,7 +71,6 @@ class SubscribeEventHandler(EventHandler):
 
     @post_message_event
     def can_handle(self, event):
-        text = event['text']
         _, is_command, self.command = event['text'] \
             .partition(f'{self.mention_text} ~')
         if 'subscribe' not in self.command:

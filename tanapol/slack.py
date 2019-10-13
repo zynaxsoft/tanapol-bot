@@ -100,17 +100,17 @@ class SlackClient:
 
     def react_message(self, reaction, channel_id, timestamp):
         self._post('/reactions.add',
-                    name=reaction,
-                    timestamp=timestamp,
-                    channel=channel_id,
-                    )
+                   name=reaction,
+                   timestamp=timestamp,
+                   channel=channel_id,
+                   )
 
     def remove_react(self, reaction, channel_id, timestamp):
         self._post('/reactions.remove',
-                    name=reaction,
-                    timestamp=timestamp,
-                    channel=channel_id,
-                    )
+                   name=reaction,
+                   timestamp=timestamp,
+                   channel=channel_id,
+                   )
 
     def react_latest_message(self, reaction, channel):
         channel_id = self.get_channel_id(channel)

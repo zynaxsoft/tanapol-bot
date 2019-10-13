@@ -1,7 +1,6 @@
 import abc
 import argparse
 import json
-import os
 
 import tanapol
 from tanapol.argparse import db

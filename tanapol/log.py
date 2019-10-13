@@ -1,7 +1,7 @@
 import logging
 import sys
 
-from tanapol.argparse import args
+# from tanapol.argparse import args
 
 
 logger = logging.getLogger('tanapol')
