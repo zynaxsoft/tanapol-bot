@@ -24,6 +24,7 @@ class SubscribeChannelCommand(Command):
         subscribe_channel_data = {
             self.event['channel']: {
                 'repeat_reaction': self.cargs.repeat_reaction,
+                'auto_reply': self.cargs.auto_reply,
                 }
             }
         if 'subscribed_channels' not in db:
@@ -49,6 +50,7 @@ def get_argparser():
 
     subscribe = subparsers.add_parser('subscribe')
     subscribe.add_argument('--repeat-reaction', '-r', action='store_true')
+    subscribe.add_argument('--auto-reply', '-a', action='store_true')
     subscribe.set_defaults(command_cls=SubscribeChannelCommand)
 
     return parser

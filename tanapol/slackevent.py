@@ -93,6 +93,9 @@ class UserMentionEventHandler(EventHandler):
     def can_handle(self, event):
         if self.mention_text not in event['text']:
             return False
+        channel = event['channel']
+        if not db['subscribed_channels'][channel]['auto_reply']:
+            return False
         return True
 
     def handle(self, event):
