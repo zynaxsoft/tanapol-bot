@@ -122,14 +122,17 @@ class OtherUserAddedReactionEventHandler(EventHandler):
             return False
         return True
 
+    def _add_reaction(self, event):
+        slack_client.react_message(event['reaction'],
+                                   event['item']['channel'],
+                                   event['item']['ts'],
+                                   )
+
     def handle(self, event):
         channel = event['item']['channel']
         if db['subscribed_channels'][channel]['repeat_reaction']:
             logger.info('adding reaction')
-            slack_client.react_message(event['reaction'],
-                                       event['item']['channel'],
-                                       event['item']['ts'],
-                                       )
+            self._add_reaction(event)
 
 
 class OtherUserRemovedReactionEventHandler(EventHandler):
@@ -143,14 +146,38 @@ class OtherUserRemovedReactionEventHandler(EventHandler):
             return False
         return True
 
+    def _remove_reaction(self, event):
+        logger.debug('getting reaction count of the message')
+        reaction_data = slack_client.get_reaction(event['item']['channel'],
+                                                  event['item']['ts'],
+                                                  )
+        if not reaction_data and 'message' not in reaction_data.content:
+            logger.debug('target is not a message ignoring this event')
+            return
+        reaction_count = 0
+        for reaction in reaction_data.content['message']['reactions']:
+            if reaction['name'] == event['reaction']:
+                reaction_count = reaction['count']
+                break
+        else:
+            logger.debug(f'could not find count'
+                         f' for reaction {event["reaction"]}')
+            return
+        logger.debug(f'reaction count is {reaction_count}')
+        if reaction_count > 1:
+            logger.info('Reaction count is still greater than 1.'
+                        ' Ignoring remove.')
+            return
+        slack_client.remove_react(event['reaction'],
+                                  event['item']['channel'],
+                                  event['item']['ts'],
+                                  )
+
     def handle(self, event):
         channel = event['item']['channel']
         if db['subscribed_channels'][channel]['repeat_reaction']:
             logger.info('removing reaction')
-            slack_client.remove_react(event['reaction'],
-                                      event['item']['channel'],
-                                      event['item']['ts'],
-                                      )
+            self._remove_reaction(event)
 
 
 EVENT_HANDLERS = [

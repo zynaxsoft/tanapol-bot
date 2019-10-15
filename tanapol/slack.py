@@ -98,6 +98,12 @@ class SlackClient:
                          count=count,
                          )
 
+    def get_reaction(self, channel_id, timestamp):
+        return self._get('/reactions.get',
+                         timestamp=timestamp,
+                         channel=channel_id,
+                         )
+
     def react_message(self, reaction, channel_id, timestamp):
         self._post('/reactions.add',
                    name=reaction,
