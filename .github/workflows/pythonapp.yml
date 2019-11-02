@@ -13,10 +13,10 @@ jobs:
         python-version: 3.7
     - name: install dependencies
       run: |
-        pip install -r requirements.txt
+        pip install -r app/requirements.txt
     - name: linting
       run: |
-        ./test.sh
+        ./app/test.sh
   release:
     needs: build
     runs-on: ubuntu-latest
