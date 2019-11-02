@@ -1,4 +1,3 @@
-uwsgi.ini
 db.json
 secrets.yml
 

@@ -1,0 +1,23 @@
+version: "3.2"
+
+services:
+  app:
+    build: app
+    image: tanapol-bot/app:latest
+    volumes:
+      - type: bind
+        source: ./app/db.json
+        target: /app/db.json
+    ports:
+      - "9989:9989"
+
+  nginx:
+    image: nginx:alpine
+    depends_on:
+      - app
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./nginx/letsencrypt:/etc/letsencrypt
+    ports:
+      - "443:443"
+      - "80:80"
