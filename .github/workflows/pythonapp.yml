@@ -16,7 +16,7 @@ jobs:
         pip install -r app/requirements.txt
     - name: linting
       run: |
-        ./app/test.sh
+        ./test.sh
   release:
     needs: build
     runs-on: ubuntu-latest
