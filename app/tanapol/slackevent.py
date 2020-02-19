@@ -108,6 +108,7 @@ class UserMentionEventHandler(EventHandler):
             reply(resp_message, event)
         _, _, message = event['text'].partition(f'{self.mention_text}')
         reply_message = message_responder.get_response(message)
+        logger.info(f'Replying with message {reply_message}')
         reply(reply_message, event)
 
 
@@ -226,7 +227,8 @@ class SlackEventServer:
         for handler in EVENT_HANDLERS:
             event = data['event']
             if handler.can_handle(event):
-                logger.debug(f'{type(self).__name__} is handling the event.')
+                logger.debug(f'{type(handler).__name__}'
+                             f' is handling the event.')
                 return handler.handle(event)
             else:
                 logger.debug(f'{type(handler).__name__} could not handle'
