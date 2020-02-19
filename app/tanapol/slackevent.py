@@ -193,13 +193,7 @@ class SlackEventServer:
     def __init__(self):
         pass
 
-    def serve(self, request):
-        data = request.get_json()
-        if data is None:
-            logger.error(f'Slack event server got none json message.'
-                         f'args: {request.args}, data: {request.data}'
-                         )
-            return self._response_code(404)
+    def serve(self, data):
         if 'challenge' in data:
             return self._response_challenge(data['challenge'])
         else:
